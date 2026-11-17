@@ -28,8 +28,12 @@ function sendAuthSuccess(req, res, redirectTo) {
     return res.redirect(redirectTo);
 }
 
+function isNonEmptyString(value) {
+    return typeof value === 'string' && value.length > 0;
+}
+
 function validateRegisterInput({ username, email, password }) {
-    if (!username || !email || !password) {
+    if (!isNonEmptyString(username) || !isNonEmptyString(email) || !isNonEmptyString(password)) {
         return 'Preencha todos os campos.';
     }
 
@@ -45,7 +49,7 @@ function validateRegisterInput({ username, email, password }) {
 }
 
 function validateLoginInput({ email, password }) {
-    if (!email || !password) {
+    if (!isNonEmptyString(email) || !isNonEmptyString(password)) {
         return 'Informe email e senha.';
     }
 
@@ -62,14 +66,21 @@ router.get('/login', (req, res) => {
 })
 
 router.post('/register', async (req, res) =>{
-    const { username, email, password } = req.body;
+    const { username, email, password } = req.body ?? {};
     const validationError = validateRegisterInput({ username, email, password });
 
     if (validationError) {
         return sendAuthError(req, res, 400, validationError);
     }
 
-    const hash = await bcrypt.hash(password, 8);
+    let hash;
+    try {
+        hash = await bcrypt.hash(password, 8);
+    } catch (error) {
+        console.error('erro ao gerar hash da senha:', error);
+        return sendAuthError(req, res, 500, 'Erro ao registrar');
+    }
+
   db.query(
     'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
     [username.trim(), email.trim().toLowerCase(), hash],
@@ -82,7 +93,7 @@ router.post('/register', async (req, res) =>{
 
 
 router.post('/login', (req, res) => {
-    const { email, password } = req.body;
+    const { email, password } = req.body ?? {};
     const validationError = validateLoginInput({ email, password });
 
     if (validationError) {
@@ -92,7 +103,15 @@ router.post('/login', (req, res) => {
     db.query('SELECT * FROM users WHERE email = ?', [email.trim().toLowerCase()], async (err, results) => {
         if (err || results.length === 0) return sendAuthError(req, res, 401, 'Credenciais inválidas');
         const user = results[0];
-        const match = await bcrypt.compare(password, user.password);
+
+        let match;
+        try {
+            match = await bcrypt.compare(password, user.password);
+        } catch (error) {
+            console.error('erro ao comparar senha:', error);
+            return sendAuthError(req, res, 500, 'Erro ao fazer login');
+        }
+
         if (!match) return sendAuthError(req, res, 401, 'Credenciais inválidas');
         const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
 

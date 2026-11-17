@@ -2,14 +2,18 @@ services:
   app:
     build: .
     container_name: bloco-notas-app
-    command: sh -c "npm ci --omit=dev && npm run dev -- --legacy-watch --ext js,json,ejs,css"
+    # O codigo e montado somente leitura em /app; as dependencias ficam em /deps,
+    # num volume proprio, e sao encontradas via NODE_PATH e PATH.
+    command: sh -c "cp /app/package.json /app/package-lock.json /deps/ && npm ci --prefix /deps && nodemon app.js --legacy-watch --ext js,json,ejs,css"
     volumes:
       - .:/app:ro
-      - app_node_modules:/app/node_modules
+      - app_node_modules:/deps/node_modules
     ports:
       - "${PORT:-3000}:3000"
     environment:
       PORT: 3000
+      NODE_PATH: /deps/node_modules
+      PATH: /deps/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       NODE_ENV: ${NODE_ENV:-development}
       JWT_SECRET: ${JWT_SECRET:?Defina JWT_SECRET no arquivo .env}
       DB_HOST: db
