@@ -1,7 +1,9 @@
+name: notespace
+
 services:
   app:
     build: .
-    container_name: bloco-notas-app
+    container_name: notespace-app
     # O codigo e montado somente leitura em /app; as dependencias ficam em /deps,
     # num volume proprio, e sao encontradas via NODE_PATH e PATH.
     command: sh -c "cp /app/package.json /app/package-lock.json /deps/ && npm ci --prefix /deps && nodemon app.js --legacy-watch --ext js,json,ejs,css"
@@ -28,7 +30,7 @@ services:
 
   db:
     image: mysql:8.4
-    container_name: bloco-notas-db
+    container_name: notespace-db
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: "yes"
       MYSQL_DATABASE: dbnotas

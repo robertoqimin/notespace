@@ -1,4 +1,4 @@
-# Bloco de Notas Online
+# Notespace
 
 Aplicação web para cadastro de usuários e gerenciamento de notas pessoais. O projeto usa Node.js com Express, renderização em EJS, autenticação com JWT em cookie HTTP-only e persistência em MySQL.
 
@@ -25,7 +25,7 @@ Aplicação web para cadastro de usuários e gerenciamento de notas pessoais. O 
 ## Estrutura principal
 
 ```text
-sistema-de-bloco-de-notas/
+notespace/
 ├── app.js
 ├── config.js
 ├── db.js
